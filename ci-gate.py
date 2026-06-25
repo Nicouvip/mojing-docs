@@ -7,9 +7,10 @@
   1. pnpm lint          — ESLint 代码风格检查
   2. tsc --noEmit       — TypeScript 类型检查（提前阻断）
   3. pnpm build         — Next.js 生产构建
-  4. .next/ 产出检查     — 关键产物完整性
-  5. 合并冲突扫描        — Git 冲突标记检测
-  6. HTTP 回归检查       — curl 页面+API 端点 200 验证
+  4. AI 端点验证         — curl POST 6 个 AI 端点 200 验证
+  5. .next/ 产出检查     — 关键产物完整性
+  6. 合并冲突扫描        — Git 冲突标记检测
+  7. HTTP 回归检查       — curl 页面+API 端点 200 验证
 
 任一阶段失败 → decisions.jsonl 告警 → sys.exit(1)
 
@@ -63,6 +64,16 @@ API_CHECKS = [
     ("AI 布局 API",        "/api/ai/layout",       "POST",  '{"prompt":"测试页面"}'),
     ("工具广场元数据 API",  "/api/tools",            "GET",   None),
     ("风格规则中心 API",    "/api/rules/styles",     "GET",   None),
+]
+
+# AI 端点（6 个 POST 端点）
+AI_ENDPOINTS = [
+    ("continue",   "/api/ai/continue",   '{"context":"test"}'),
+    ("polish",     "/api/ai/polish",     '{"text":"测试文字"}'),
+    ("expand",     "/api/ai/expand",     '{"text":"测试文字"}'),
+    ("brainstorm", "/api/ai/brainstorm", '{"genre":"都市"}'),
+    ("inspire",    "/api/ai/inspire",    '{"mode":"direct-diverge"}'),
+    ("alchemy",    "/api/ai/alchemy",    '{"genre":"玄幻"}'),
 ]
 
 
@@ -120,7 +131,7 @@ def run_command(cmd: list, cwd: Path, timeout: int, label: str
 
 def step_lint() -> tuple[bool, str]:
     """① pnpm lint — ESLint 代码风格检查"""
-    step_header("🧹", "步骤 1/6: pnpm lint (ESLint)")
+    step_header("🧹", "步骤 1/7: pnpm lint (ESLint)")
     if not (APP_DIR / "eslint.config.mjs").exists():
         return True, "⏭️  无 eslint.config.mjs，跳过 lint"
     return run_command(
@@ -130,7 +141,7 @@ def step_lint() -> tuple[bool, str]:
 
 def step_typecheck() -> tuple[bool, str]:
     """② tsc --noEmit — TypeScript 类型检查"""
-    step_header("🔍", "步骤 2/6: tsc --noEmit (类型检查)")
+    step_header("🔍", "步骤 2/7: tsc --noEmit (类型检查)")
     return run_command(
         ["npx", "tsc", "--noEmit"], APP_DIR, 120, "tsc --noEmit"
     )[:2]
@@ -138,7 +149,7 @@ def step_typecheck() -> tuple[bool, str]:
 
 def step_build() -> tuple[bool, str]:
     """③ pnpm build — Next.js 生产构建"""
-    step_header("📦", "步骤 3/6: pnpm build")
+    step_header("📦", "步骤 3/7: pnpm build")
     if not (APP_DIR / "package.json").exists():
         return False, f"[错误] 未找到 {APP_DIR / 'package.json'}"
     return run_command(
@@ -146,9 +157,28 @@ def step_build() -> tuple[bool, str]:
     )[:2]
 
 
+def step_35_ai_endpoints() -> tuple[bool, list[dict]]:
+    """④ AI 端点验证 — curl POST 6 个 AI 端点"""
+    step_header("🤖", "步骤 4/7: AI 端点验证")
+    results = []
+    for name, path, body in AI_ENDPOINTS:
+        code, err = curl_check("POST", path, body)
+        ok = code == 200
+        icon = "✅" if ok else "❌"
+        detail = f"HTTP {code}" if code else (err or "连接失败")
+        print(f"  {icon}  POST {path:<30s}  {detail}")
+        results.append({"path": path, "ok": ok, "code": code, "error": err})
+        if not ok: time.sleep(REQUEST_DELAY)
+    total = len(results)
+    passed_count = sum(1 for r in results if r["ok"])
+    ok = passed_count == total
+    print(f"\n  {'✅' if ok else '❌'} AI端点: {passed_count}/{total} 通过")
+    return ok, results
+
+
 def step_output_files() -> tuple[bool, list[str]]:
     """④ 检查 .next/ 关键产出文件"""
-    step_header("📂", "步骤 4/6: 检查产出文件")
+    step_header("📂", "步骤 5/7: 检查产出文件")
     missing = []
     for rel in ESSENTIAL_OUTPUTS:
         f = APP_DIR / rel
@@ -165,7 +195,7 @@ def step_output_files() -> tuple[bool, list[str]]:
 
 def step_merge_conflicts() -> tuple[bool, list[str]]:
     """⑤ 检查 Git 合并冲突标记"""
-    step_header("🔍", "步骤 5/6: 检查合并冲突")
+    step_header("🔍", "步骤 6/7: 检查合并冲突")
     try:
         result = subprocess.run(
             ["git", "ls-files"], cwd=str(APP_DIR),
@@ -250,7 +280,7 @@ def curl_check(method: str, path: str, body: str = None) -> tuple:
 
 def step_regression() -> tuple[bool, list[dict]]:
     """⑥ HTTP 回归检查（页面 + API）"""
-    step_header("🌐", "步骤 6/6: HTTP 回归检查")
+    step_header("🌐", "步骤 7/7: HTTP 回归检查")
     results = []
     failed_count = 0
     MAX_FAILURES = 3  # 快速失败：连续 3 项失败则中止
@@ -440,7 +470,19 @@ def main():
             errors.append(f"构建失败: {build_msg}")
             passed = False  # 继续检查后续，收集完整报告
 
-    # ── 步骤 4: 检查产出文件 ──
+    # ── 步骤 4: AI 端点检查 ──
+    ai_ok, ai_results = step_35_ai_endpoints()
+    details["ai_endpoints"] = {
+        "total": len(ai_results),
+        "passed": sum(1 for r in ai_results if r["ok"]),
+        "checks": ai_results,
+    }
+    if not ai_ok:
+        failed_ai = [r for r in ai_results if not r["ok"]]
+        errors.append(f"AI端点验证失败: {len(failed_ai)} 个未通过")
+        passed = False
+
+    # ── 步骤 5: 检查产出文件 ──
     if skip_build:
         details["output_files"] = "已跳过（因 --skip-build）"
     else:
@@ -450,7 +492,7 @@ def main():
             passed = False
         details["output_files"] = missing if not output_ok else "✅ 完整"
 
-    # ── 步骤 5: 检查合并冲突 ──
+    # ── 步骤 6: 检查合并冲突 ──
     conflict_ok, conflicted = step_merge_conflicts()
     if not conflict_ok:
         errors.append(f"合并冲突: {', '.join(conflicted[:10])}" +
@@ -458,7 +500,7 @@ def main():
         passed = False
     details["merge_conflicts"] = conflicted if not conflict_ok else "✅ 无"
 
-    # ── 步骤 6: HTTP 回归检查 ──
+    # ── 步骤 7: HTTP 回归检查 ──
     reg_ok, reg_results = step_regression()
     if not reg_ok:
         failed_reg = [r for r in reg_results if not r["passed"]]

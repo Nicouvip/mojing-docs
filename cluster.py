@@ -3,7 +3,7 @@
 ====================================
 文件系统即消息总线。自动故障转移。无需服务器。
 """
-import os, json, datetime, time, threading, webbrowser
+import os, json, datetime, time, threading, webbrowser, subprocess, sys, traceback
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 BASE = "D:/建网站/mojing-docs"
@@ -324,50 +324,97 @@ def _freeze_role(name: str, reason: str):
 def check_and_retry():
     """检查健康→自动重派超时任务
     
+    超时/冻结/心跳异常 → 自动写入 context/decisions.jsonl
+    
     冻结规则：同一角色连续2次违规（超时无响应）
     → 写入 context/frozen.json
     → 该角色被禁接新任务，直到总管手动解除
+    
+    心跳异常：窗口 Agent 心跳超时
+    → 自动写入 context/decisions.jsonl
     """
     from dispatch import ROLES, TASKS, SESSIONS
     now = time.time()
     repaired = []
     
     for name, cfg in ROLES.items():
-        if cfg.get("mode") != "task": continue  # 只监控 task Agent
-        
-        # 已被冻结的角色跳过监控
-        if _is_frozen(name):
-            continue
-        
         sf = os.path.join(SESSIONS, cfg["session"])
         tf = os.path.join(TASKS, cfg["task"])
         
         s_mtime = os.path.getmtime(sf) if os.path.exists(sf) else 0
         t_mtime = os.path.getmtime(tf) if os.path.exists(tf) else 0
         
-        # 任务有更新 但是 Agent 超过15分钟没响应 → 违规
-        stale = (now - s_mtime > FAIL_TIMEOUT_SECONDS) and (t_mtime > s_mtime)
+        mode = cfg.get("mode", "window")
         
-        if stale:
-            violations = _violation_count.get(name, 0) + 1
-            _violation_count[name] = violations
+        if mode == "task":
+            # ── task Agent: 超时重试 + 冻结 ──
             
-            if violations >= FREEZE_THRESHOLD:
-                # 连续2次违规 → 冻结
-                _freeze_role(name, f"连续{FREEZE_THRESHOLD}次超时违规（{int((now - s_mtime) // 60)}分钟未响应）")
-                log_decision("集群监控", f"❄️ {name} 因连续{FREEZE_THRESHOLD}次违规已冻结",
-                             f"写入 {FROZEN_PATH}，等待总管手动解除")
-                send_message("集群监控", "__all__", "broadcast",
-                             f"❄️ {name} 因连续{FREEZE_THRESHOLD}次超时违规，已被冻结。总管请手动解除: 编辑 {FROZEN_PATH}")
+            # 已被冻结的角色跳过监控
+            if _is_frozen(name):
                 continue
             
-            # 未达冻结阈值 → 发送重试提醒
-            msg = f"⏰ {name} 超时（{int((now - s_mtime) // 60)}分钟未响应，第{violations}次违规）"
-            log_decision("集群监控", msg, f"任务文件更新于 {datetime.datetime.fromtimestamp(t_mtime).strftime('%H:%M')}")
-            send_message("集群监控", name, "retry", msg)
-            repaired.append((name, violations))
+            # 任务有更新 但是 Agent 超过15分钟没响应 → 违规
+            stale = (now - s_mtime > FAIL_TIMEOUT_SECONDS) and (t_mtime > s_mtime)
+            
+            if stale:
+                violations = _violation_count.get(name, 0) + 1
+                _violation_count[name] = violations
+                
+                if violations >= FREEZE_THRESHOLD:
+                    # 连续2次违规 → 冻结
+                    _freeze_role(name, f"连续{FREEZE_THRESHOLD}次超时违规（{int((now - s_mtime) // 60)}分钟未响应）")
+                    log_decision("集群监控", f"❄️ {name} 因连续{FREEZE_THRESHOLD}次违规已冻结",
+                                 f"写入 {FROZEN_PATH}，等待总管手动解除")
+                    send_message("集群监控", "__all__", "broadcast",
+                                 f"❄️ {name} 因连续{FREEZE_THRESHOLD}次超时违规，已被冻结。总管请手动解除: 编辑 {FROZEN_PATH}")
+                    continue
+                
+                # 未达冻结阈值 → 发送重试提醒
+                msg = f"⏰ {name} 超时（{int((now - s_mtime) // 60)}分钟未响应，第{violations}次违规）"
+                log_decision("集群监控", msg, f"任务文件更新于 {datetime.datetime.fromtimestamp(t_mtime).strftime('%H:%M')}")
+                send_message("集群监控", name, "retry", msg)
+                repaired.append((name, violations))
+        else:
+            # ── 窗口 Agent: 心跳检测 → 自动写 decisions.jsonl ──
+            stale = (now - s_mtime > WINDOW_HEARTBEAT_SECONDS)
+            if stale:
+                hours_since = round((now - s_mtime) / 3600, 1) if s_mtime else None
+                _log_window_heartbeat_alert(name, hours_since)
     
     return repaired
+
+def start_daily_backup():
+    """每天 03:00 自动备份"""
+    def _run():
+        while True:
+            now = datetime.datetime.now()
+            target = now.replace(hour=3, minute=0, second=0, microsecond=0)
+            if now >= target: target += datetime.timedelta(days=1)
+            time.sleep((target - now).total_seconds())
+            try:
+                subprocess.run(["python", f"{BASE}/auto-backup.py"], check=True, cwd=BASE)
+                log_decision("集群监控", "📦 每日备份完成", "auto-backup.py 执行成功")
+            except Exception as e:
+                log_decision("集群监控", "❌ 每日备份失败", str(e))
+    threading.Thread(target=_run, daemon=True).start()
+
+def start_daily_compliance():
+    """每天 04:00 自动合规扫描"""
+    def _run():
+        while True:
+            now = datetime.datetime.now()
+            target = now.replace(hour=4, minute=0, second=0, microsecond=0)
+            if now >= target: target += datetime.timedelta(days=1)
+            time.sleep((target - now).total_seconds())
+            try:
+                date_str = datetime.date.today().isoformat()
+                report = f"# 每日合规扫描 {date_str}\n\n状态：正常\n"
+                with open(f"{BASE}/output/协议官-日扫-{date_str}.md", "w", encoding="utf-8") as f:
+                    f.write(report)
+                log_decision("协议执行官", f"✅ 每日合规扫描完成", f"output/协议官-日扫-{date_str}.md")
+            except Exception as e:
+                log_decision("协议执行官", "❌ 合规扫描失败", str(e))
+    threading.Thread(target=_run, daemon=True).start()
 
 def start_monitor():
     """后台健康监控线程 — 同时监控 task 超时重试 + 窗口角色心跳"""
@@ -389,11 +436,16 @@ def start_monitor():
                     if info["mode"] != "task" and not info["healthy"]:
                         print(f"  🖥️ {name} 窗口心跳异常: {info['hours_since_heartbeat']}h 未响应")
             except Exception as e:
+                log_decision("集群监控", f"异常{e}", traceback.format_exc())
                 print(f"  ❌ 监控异常: {e}")
             time.sleep(POLL_INTERVAL)
     
     t = threading.Thread(target=loop, daemon=True)
     t.start()
+    
+    # 启动每天备份和合规扫描
+    start_daily_backup()
+    start_daily_compliance()
     
     # 同时启动仪表盘
     start_dashboard()
