@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>墨境集团 · 运行看板</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#faf9f6;color:#111}
+.topbar{background:#fff;border-bottom:1px solid #ebe5dd;padding:12px 24px;display:flex;align-items:center;justify-content:space-between}
+.topbar h1{font-size:18px}.topbar a{font-size:11px;color:#6b8c6e;text-decoration:none;margin-left:16px}
+.container{max-width:1400px;margin:0 auto;padding:20px}
+.stats{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.stat{background:#fff;border-radius:12px;padding:16px 20px;border:1px solid #ebe5dd;min-width:100px;flex:1}
+.stat-val{font-size:28px;font-weight:700}.stat-lbl{font-size:10px;color:#888;text-transform:uppercase}
+.section-title{font-size:13px;font-weight:600;color:#888;margin:20px 0 10px;text-transform:uppercase;letter-spacing:.5px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.card{background:#fff;border-radius:12px;padding:14px 16px;border:1px solid #ebe5dd;display:flex;align-items:center;gap:12px;transition:all .2s}
+.card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.06)}
+.card.task{border-left:3px solid #8b5cf6}
+.card.window{border-left:3px solid #6b8c6e}
+.card.new{border-left:3px solid #f59e0b}
+.card-icon{font-size:22px;width:32px;text-align:center}
+.card-body{flex:1}
+.card-name{font-weight:600;font-size:13px}
+.card-status{font-size:10px;color:#888;margin-top:2px}
+.card-badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-active{background:#dcfce7;color:#16a34a}
+.badge-idle{background:#f5f5f5;color:#888}
+.badge-new{background:#fef3c7;color:#d97706}
+.feed{background:#fff;border-radius:12px;padding:16px;border:1px solid #ebe5dd;margin-top:16px}
+.feed-item{padding:6px 0;font-size:12px;border-bottom:1px solid #f5f5f5;display:flex;gap:8px}
+.feed-time{color:#aaa;width:42px;flex-shrink:0}
+.feed-role{color:#8b5cf6;font-weight:600;flex-shrink:0}
+.empty{text-align:center;color:#aaa;padding:40px;font-size:13px}
+.refresh{font-size:10px;color:#aaa;text-align:right;padding:8px}
+</style>
+</head>
+<body>
+<div class="topbar">
+<h1>🌙 墨境集团 · 运行看板</h1>
+<div>
+<a href="http://localhost:3000" target="_blank">🌐 网站</a>
+<a href="http://localhost:8899" target="_blank">📊 项目全景</a>
+<a href="http://localhost:8901" target="_blank">🏛️ 圆桌会议室</a>
+</div>
+</div>
+<div class="container">
+<div class="stats" id="stats"></div>
+<div class="section-title">🔧 Task 工位（后台自动）</div><div class="grid" id="task-grid"></div>
+<div class="section-title">🖥️ 窗口工位（需手动唤醒）</div><div class="grid" id="window-grid"></div>
+<div class="section-title">🆕 新入职（本轮扩容）</div><div class="grid" id="new-grid"></div>
+<div class="feed" id="feed"><b>📨 最近产出</b></div>
+<div class="refresh" id="refreshInfo">加载中...</div>
+</div>
+<script>
+var TASK = [
+{icon:'⚙️',name:'后端技术负责人',role:'API+数据库',status:'idle'},
+{icon:'🎨',name:'前端技术负责人',role:'页面+组件',status:'idle'},
+{icon:'🧠',name:'提示词系统专家',role:'引擎+文案',status:'idle'},
+{icon:'📊',name:'产品经理',role:'需求+优先级',status:'idle'},
+{icon:'🔧',name:'DevOps工程师',role:'CI+部署+监控',status:'new'},
+{icon:'✂️',name:'编辑器专责',role:'编辑器核心5万行',status:'new'},
+{icon:'📈',name:'增长分析师',role:'用户+留存+实验',status:'new'},
+{icon:'🤖',name:'AI模型评测员',role:'提示词效果评估',status:'new'},
+{icon:'🔌',name:'API逻辑工程师',role:'API设计+测试',status:'new'},
+{icon:'📄',name:'页面组件工程师',role:'页面开发+组件库',status:'new'},
+];
+var WINDOW = [
+{icon:'👁️',name:'UX体验员',role:'走查+截图',status:'idle'},
+{icon:'🎯',name:'UI设计师',role:'视觉+CSS',status:'idle'},
+{icon:'🧪',name:'QA测试工程师',role:'全站测试',status:'idle'},
+{icon:'🔍',name:'架构审查员',role:'代码终审',status:'idle'},
+{icon:'🛡️',name:'协议执行官',role:'监督合规',status:'idle'},
+{icon:'✨',name:'动效交互设计师',role:'动效+微交互',status:'new'},
+{icon:'🖌️',name:'品牌插画师',role:'Logo+VI+插画',status:'new'},
+];
+
+function render(){
+var taskN = TASK.length, winN = WINDOW.length, total = taskN+winN+1;
+var active = TASK.filter(t=>t.status!=='idle').length + WINDOW.filter(w=>w.status!=='idle').length;
+var newHires = [...TASK,...WINDOW].filter(r=>r.status==='new').length;
+document.getElementById('stats').innerHTML = '<div class="stat"><div class="stat-val">'+total+'</div><div class="stat-lbl">总人数(+总管)</div></div><div class="stat"><div class="stat-val" style="color:#6b8c6e">'+(total-newHires)+'</div><div class="stat-lbl">老成员</div></div><div class="stat"><div class="stat-val" style="color:#f59e0b">'+newHires+'</div><div class="stat-lbl">🆕 新入职</div></div><div class="stat"><div class="stat-val" style="color:#8b5cf6">'+taskN+'</div><div class="stat-lbl">🔧 Task</div></div><div class="stat"><div class="stat-val" style="color:#6b8c6e">'+winN+'</div><div class="stat-lbl">🖥️ 窗口</div></div>';
+
+document.getElementById('task-grid').innerHTML = TASK.map(r=>'<div class="card '+(r.status==='new'?'new':'task')+'"><div class="card-icon">'+r.icon+'</div><div class="card-body"><div class="card-name">'+r.name+'</div><div class="card-status">'+r.role+'</div></div>'+(r.status==='new'?'<span class="card-badge badge-new">新</span>':'<span class="card-badge badge-idle">待命</span>')+'</div>').join('');
+
+document.getElementById('window-grid').innerHTML = WINDOW.map(r=>'<div class="card '+(r.status==='new'?'new':'window')+'"><div class="card-icon">'+r.icon+'</div><div class="card-body"><div class="card-name">'+r.name+'</div><div class="card-status">'+r.role+'</div></div>'+(r.status==='new'?'<span class="card-badge badge-new">新</span>':'<span class="card-badge badge-idle">待命</span>')+'</div>').join('');
+
+document.getElementById('feed').innerHTML = '<b>📨 最近产出（本次会话）</b><br><br>' + [
+{time:'02:53',role:'增长分析师',text:'诊断:0埋点+6增长指标+3零成本实验'},
+{time:'02:52',role:'AI评测员',text:'5维评测标准+704行方案+12附录速查'},
+{time:'02:44',role:'DevOps',text:'CI流水线:6步门禁+GitHub Actions'},
+{time:'02:43',role:'编辑器专责',text:'健康诊断:48useState+412行JSX→6文件拆分'},
+{time:'02:41',role:'品牌插画师',text:'审计:6个已有+5项缺失(5/10分)'},
+{time:'02:39',role:'动效设计师',text:'5个动效方案:按钮/切换/加载/成功/失败'},
+{time:'02:38',role:'API逻辑',text:'审计:24端点,4个高风险'},
+{time:'02:37',role:'页面组件',text:'审计:22页面,2完整/1缺/3缺响应式/16缺动效'},
+].map(d=>'<div class="feed-item"><span class="feed-time">'+d.time+'</span><span class="feed-role">'+d.role+'</span><span>'+d.text+'</span></div>').join('');
+
+document.getElementById('refreshInfo').textContent = '更新: '+new Date().toLocaleTimeString()+' · 刷新页面更新';
+}
+render();
+</script>
+</body>
+</html>

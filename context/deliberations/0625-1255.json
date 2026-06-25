@@ -1,0 +1,67 @@
+{
+  "id": "0625-1255",
+  "topic": "集群体检：有哪些漏洞和可改善之处？",
+  "participants": [
+    "总管",
+    "架构",
+    "组织发展官",
+    "协议执行官",
+    "后端",
+    "前端",
+    "产品",
+    "QA",
+    "UX",
+    "DevOps"
+  ],
+  "rounds": [
+    {
+      "number": 1,
+      "statements": [
+        {
+          "speaker": "组织发展官",
+          "angle": "人才",
+          "content": "14人闲置73%——不是人不够，任务拆分太粗。每个编码任务应拆分到5步内。建议设Dogfooding角色每天以真实用户身份体验网站。",
+          "responds_to": "",
+          "timestamp": "2026-06-25T12:55:58.683707"
+        },
+        {
+          "speaker": "协议执行官",
+          "angle": "合规",
+          "content": "我只能写报告无法强制整改。建议给我冻结权限:严重违规当场禁止接新任务。cluster监控只查task不查窗口——UX/UI/QA/架构可能无声死掉。",
+          "responds_to": "",
+          "timestamp": "2026-06-25T12:55:58.695794"
+        },
+        {
+          "speaker": "DevOps",
+          "angle": "基建",
+          "content": "无备份恢复演练。D盘挂了全丢。建议每周自动打包到云端。全景8899被我改挂3次——核心服务器操作应有sandbox。",
+          "responds_to": "",
+          "timestamp": "2026-06-25T12:55:58.708638"
+        },
+        {
+          "speaker": "QA",
+          "angle": "质量",
+          "content": "编译通过=门禁是最大隐患。零单元/集成/E2E测试。建议每个AI端点加curl测试，CI每轮自动跑。Bug清单多久没更新了？要cross-role可见Bug Board。",
+          "responds_to": "",
+          "timestamp": "2026-06-25T12:55:58.723012"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "statements": [
+        {
+          "speaker": "总管",
+          "angle": "综合决策",
+          "content": "经4人发言，集团最紧急的4个漏洞:①零测试→QA牵头建curl测试脚本覆盖6个AI端点 ②备份无演练→DevOps每周打包到D:\\建网站\backups\u0007uto ③协议执行官无执法权→授权冻结机制:连续2次违规自动禁接新任务 ④窗口角色无监控→cluster加窗口心跳检测(超24h未响应告警)。4项本周内落地。另外已有多人提到Dogfooding和Bug Board——排入下周议程。",
+          "responds_to": "",
+          "timestamp": "2026-06-25T12:56:05.925850"
+        }
+      ]
+    }
+  ],
+  "status": "closed",
+  "created": "2026-06-25T12:55:40.222581",
+  "conclusion": "4项紧急修复:curl测试脚本+每周自动备份+协议官冻结权+窗口心跳监控。下周:Dogfooding+Bug Board。",
+  "closed": "2026-06-25T12:56:05.945108"
+}

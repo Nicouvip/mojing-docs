@@ -1,0 +1,3 @@
+{"role": "后端技术负责人", "decision": "Supabase fallback+bryptjs+Credentials", "reasoning": "无真实凭据时仍可本地运行", "timestamp": "2026-06-25T09:34:38.126576"}
+{"role": "总管", "decision": "集群v2上线：4 task + 4 窗口", "reasoning": "省90% token + 文件总线通信", "timestamp": "2026-06-25T09:34:38.126887"}
+{"role": "集体会诊0625", "decision": "4项紧急:curl测试+每周备份+协议官冻结+窗口心跳", "reasoning": "全员共识", "timestamp": "2026-06-25T12:56:17.322639"}

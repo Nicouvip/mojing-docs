@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>墨境 · 智能体指挥中心</title>
+<style>
+/* ===== 全局 ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+@font-face {
+  font-family: 'Ink';
+  src: local('Microsoft YaHei'), local('PingFang SC'), local('Noto Sans SC');
+}
+:root {
+  --bg-dark:     #0a0a12;
+  --bg-panel:    #12121f;
+  --bg-card:     #1a1a2e;
+  --border-glow: rgba(180,140,60,0.25);
+  --gold:        #d4a843;
+  --gold-dim:    #a8883a;
+  --gold-bright: #f0d080;
+  --ink:         #2a2a3e;
+  --ink-light:   #3a3a52;
+  --text-main:   #dcd8cc;
+  --text-dim:    #8a8699;
+  --text-bright: #f5efe0;
+  --accent-red:  #c0392b;
+  --accent-fire: #e67e22;
+  --accent-cyan: #2aa8a0;
+  --accent-teal: #1e7a74;
+  --shadow-glow: 0 0 20px rgba(180,140,60,0.08);
+  --heartbeat:   #e74c3c;
+}
+html, body {
+  height: 100%;
+  font-family: 'Ink', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-main);
+  overflow: hidden;
+}
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ===== 主容器 ===== */
+.dashboard {
+  width: 1440px;
+  max-width: 98vw;
+  height: 900px;
+  max-height: 98vh;
+  display: grid;
+  grid-template-columns: 260px 1fr 280px;
+  gap: 2px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-glow);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(180,140,60,0.06), inset 0 0 80px rgba(10,10,18,0.8);
+  position: relative;
+}
+/* 装饰纹理 */
+.dashboard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 30%, rgba(180,140,60,0.03) 0%, transparent 60%),
+    radial-gradient(ellipse at 85% 70%, rgba(42,168,160,0.03) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== 面板通用 ===== */
+.panel {
+  position: relative;
+  z-index: 1;
+  background: var(--bg-panel);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-header {
+  padding: 16px 18px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(180,140,60,0.12);
+  flex-shrink: 0;
+}
+.panel-header .icon {
+  font-size: 18px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--ink-light), var(--ink));
+  border: 1px solid rgba(180,140,60,0.15);
+}
+.panel-header h2 {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--gold-dim);
+  text-shadow: 0 0 12px rgba(180,140,60,0.15);
+}
+.panel-header .badge {
+  margin-left: auto;
+  font-size: 11px;
+  background: rgba(180,140,60,0.12);
+  color: var(--gold);
+  padding: 2px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(180,140,60,0.15);
+}
+
+/* ===== 左栏 · Agent 列表 ===== */
+.panel-left { border-right: 1px solid rgba(180,140,60,0.06); }
+.agent-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.agent-list::-webkit-scrollbar { width: 3px; }
+.agent-list::-webkit-scrollbar-track { background: transparent; }
+.agent-list::-webkit-scrollbar-thumb { background: rgba(180,140,60,0.2); border-radius: 3px; }
+
+.agent-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid rgba(180,140,60,0.06);
+  transition: all 0.25s ease;
+  cursor: default;
+  position: relative;
+}
+.agent-card:hover {
+  border-color: rgba(180,140,60,0.2);
+  background: #1e1e34;
+  transform: translateX(2px);
+}
+.agent-card .avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border: 2px solid rgba(180,140,60,0.15);
+  position: relative;
+}
+.agent-card .avatar::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  transition: all 0.3s;
+}
+.agent-card.online .avatar::after {
+  border-color: rgba(46,204,113,0.25);
+}
+.agent-card .info {
+  flex: 1;
+  min-width: 0;
+}
+.agent-card .name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-bright);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.agent-card .name .tag {
+  font-size: 9px;
+  background: rgba(180,140,60,0.12);
+  color: var(--gold-dim);
+  padding: 0 6px;
+  border-radius: 4px;
+  font-weight: 400;
+}
+.agent-card .status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+.agent-card .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2ecc71;
+  box-shadow: 0 0 6px rgba(46,204,113,0.4);
+}
+.agent-card .status-dot.idle {
+  background: var(--gold-dim);
+  box-shadow: 0 0 6px rgba(180,140,60,0.3);
+}
+.agent-card .status-dot.offline {
+  background: #555;
+  box-shadow: none;
+}
+.agent-card .status-text {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.agent-card .heartbeat {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  position: relative;
+}
+.agent-card .heartbeat .pulse {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--heartbeat);
+  opacity: 0.6;
+  animation: pulse-beat 1.5s ease-in-out infinite;
+}
+.agent-card .heartbeat .pulse.off {
+  background: #444;
+  animation: none;
+  opacity: 0.3;
+}
+@keyframes pulse-beat {
+  0%, 100% { transform: scale(0.6); opacity: 0.4; }
+  50% { transform: scale(1.1); opacity: 0.9; }
+}
+
+/* 不同角色头像配色 */
+.agent-card .avatar.role-warrior { background: linear-gradient(135deg, #2d1b1b, #3d1a1a); border-color: rgba(192,57,43,0.3); }
+.agent-card .avatar.role-mage    { background: linear-gradient(135deg, #1a1a3d, #1b2d3d); border-color: rgba(42,168,160,0.3); }
+.agent-card .avatar.role-rogue   { background: linear-gradient(135deg, #1a2d1b, #2d3d1b); border-color: rgba(230,126,34,0.3); }
+.agent-card .avatar.role-priest  { background: linear-gradient(135deg, #2d1b3d, #3d1a2d); border-color: rgba(212,168,67,0.3); }
+
+/* ===== 中栏 · 消息流 ===== */
+.panel-center {
+  border-right: 1px solid rgba(180,140,60,0.06);
+  background: linear-gradient(180deg, var(--bg-panel) 0%, #0f0f1e 100%);
+}
+.message-stream {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.message-stream::-webkit-scrollbar { width: 3px; }
+.message-stream::-webkit-scrollbar-track { background: transparent; }
+.message-stream::-webkit-scrollbar-thumb { background: rgba(180,140,60,0.15); border-radius: 3px; }
+
+.msg {
+  display: flex;
+  gap: 10px;
+  animation: msg-in 0.35s ease-out;
+}
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.msg .msg-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border: 1px solid rgba(180,140,60,0.12);
+  margin-top: 2px;
+}
+.msg .msg-body {
+  flex: 1;
+  min-width: 0;
+}
+.msg .msg-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.msg .msg-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold-dim);
+}
+.msg .msg-time {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.msg .msg-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-main);
+  background: rgba(26,26,46,0.6);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(180,140,60,0.04);
+  word-break: break-word;
+}
+.msg.system .msg-text {
+  background: rgba(180,140,60,0.06);
+  border-color: rgba(180,140,60,0.1);
+  color: var(--gold);
+  font-size: 12px;
+  text-align: center;
+}
+.msg.system { justify-content: center; }
+.msg.system .msg-avatar { display: none; }
+
+/* 消息时间线装饰 */
+.msg-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0 2px;
+  color: var(--text-dim);
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.msg-divider::before,
+.msg-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(180,140,60,0.08), transparent);
+}
+
+/* ===== 右栏 · 统计面板 ===== */
+.panel-right { background: linear-gradient(180deg, var(--bg-panel) 0%, #0e0e1c 100%); }
+.stats-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.stats-content::-webkit-scrollbar { width: 3px; }
+.stats-content::-webkit-scrollbar-track { background: transparent; }
+.stats-content::-webkit-scrollbar-thumb { background: rgba(180,140,60,0.15); border-radius: 3px; }
+
+.stat-card {
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 14px 16px;
+  border: 1px solid rgba(180,140,60,0.06);
+}
+.stat-card .stat-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stat-card .stat-number {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold-bright);
+  text-shadow: 0 0 20px rgba(212,168,67,0.1);
+  line-height: 1.1;
+}
+.stat-card .stat-number .unit {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--gold-dim);
+  margin-left: 4px;
+}
+.stat-card .stat-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* 活跃度排行 */
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(26,26,46,0.5);
+  border-radius: 6px;
+  border: 1px solid rgba(180,140,60,0.04);
+  transition: all 0.2s;
+}
+.rank-item:hover {
+  border-color: rgba(180,140,60,0.12);
+  background: rgba(30,30,52,0.7);
+}
+.rank-item .rank-pos {
+  width: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold-dim);
+  text-align: center;
+}
+.rank-item .rank-pos.top1 { color: #f1c40f; }
+.rank-item .rank-pos.top2 { color: #bdc3c7; }
+.rank-item .rank-pos.top3 { color: #e67e22; }
+.rank-item .rank-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  border: 1px solid rgba(180,140,60,0.1);
+  flex-shrink: 0;
+}
+.rank-item .rank-name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+.rank-item .rank-bar-wrap {
+  width: 60px;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.rank-item .rank-bar {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+  transition: width 0.6s ease;
+}
+.rank-item .rank-count {
+  font-size: 11px;
+  color: var(--gold-dim);
+  min-width: 24px;
+  text-align: right;
+}
+
+/* ===== 顶部标题装饰 ===== */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px 8px;
+  gap: 14px;
+  border-bottom: 1px solid rgba(180,140,60,0.06);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.top-bar .logo {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-bright), var(--gold-dim));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+}
+.top-bar .subtitle {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+}
+.top-bar .status-indicator {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.top-bar .status-indicator .live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2ecc71;
+  animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ===== 模拟数据行 ===== */
+.mock-controls {
+  display: flex;
+  gap: 6px;
+  padding: 8px 18px 12px;
+  border-top: 1px solid rgba(180,140,60,0.06);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.mock-btn {
+  font-size: 11px;
+  padding: 5px 14px;
+  border: 1px solid rgba(180,140,60,0.15);
+  border-radius: 6px;
+  background: rgba(26,26,46,0.5);
+  color: var(--gold-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.mock-btn:hover {
+  background: rgba(180,140,60,0.1);
+  border-color: rgba(180,140,60,0.3);
+  color: var(--gold);
+}
+.mock-btn:active { transform: scale(0.96); }
+.mock-btn.primary {
+  background: rgba(180,140,60,0.15);
+  border-color: rgba(180,140,60,0.25);
+  color: var(--gold);
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 1100px) {
+  .dashboard {
+    grid-template-columns: 220px 1fr 240px;
+    height: auto;
+    max-height: 100vh;
+  }
+}
+@media (max-width: 800px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    max-width: 100vw;
+    gap: 1px;
+  }
+  .panel-left, .panel-center, .panel-right { border: none; }
+  .panel-left { max-height: 200px; }
+  .panel-right { max-height: 220px; }
+}
+</style>
+</head>
+<body>
+
+<div class="dashboard" id="app">
+
+  <!-- ====== 顶部栏 ====== -->
+  <div class="top-bar" style="grid-column:1/-1;">
+    <span class="logo">墨 境</span>
+    <span class="subtitle">· 智能体指挥中心 ·</span>
+    <div class="status-indicator">
+      <span class="live-dot"></span>
+      <span id="liveCount">运行中</span>
+    </div>
+  </div>
+
+  <!-- ====== 左栏 ====== -->
+  <div class="panel panel-left">
+    <div class="panel-header">
+      <span class="icon">⚔</span>
+      <h2>Agent 在线</h2>
+      <span class="badge" id="agentCount">0</span>
+    </div>
+    <div class="agent-list" id="agentList"></div>
+  </div>
+
+  <!-- ====== 中栏 ====== -->
+  <div class="panel panel-center">
+    <div class="panel-header">
+      <span class="icon">🗣</span>
+      <h2>消息流</h2>
+      <span class="badge" id="msgCount">0</span>
+    </div>
+    <div class="message-stream" id="messageStream"></div>
+    <div class="mock-controls">
+      <button class="mock-btn primary" onclick="addRandomMsg()">+ 模拟消息</button>
+      <button class="mock-btn" onclick="addRandomMsgBatch()">+5 批量</button>
+      <button class="mock-btn" onclick="clearMessages()">清空</button>
+    </div>
+  </div>
+
+  <!-- ====== 右栏 ====== -->
+  <div class="panel panel-right">
+    <div class="panel-header">
+      <span class="icon">📊</span>
+      <h2>统计面板</h2>
+      <span class="badge" id="statPeriod">今日</span>
+    </div>
+    <div class="stats-content" id="statsContent"></div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+//  墨境 · 模拟数据引擎
+// ============================================================
+
+// ---------- Agent 配置 ----------
+const AGENTS = [
+  { id: 'a1', name: '玄霜',  emoji: '❄️', role: 'warrior', tag: '先锋',  status: 'online' },
+  { id: 'a2', name: '赤霄',  emoji: '🔥', role: 'mage',    tag: '术士',  status: 'online' },
+  { id: 'a3', name: '青冥',  emoji: '🌪', role: 'rogue',   tag: '游侠',  status: 'online' },
+  { id: 'a4', name: '紫烟',  emoji: '✨', role: 'priest',  tag: '灵愈',  status: 'online' },
+  { id: 'a5', name: '白夜',  emoji: '🌙', role: 'mage',    tag: '智者',  status: 'idle'  },
+  { id: 'a6', name: '墨麟',  emoji: '🐉', role: 'warrior', tag: '护卫',  status: 'online' },
+  { id: 'a7', name: '金蝉',  emoji: '🪷', role: 'priest',  tag: '禅修',  status: 'offline' },
+  { id: 'a8', name: '血鸮',  emoji: '🦉', role: 'rogue',   tag: '暗哨',  status: 'online' },
+];
+
+const STATUS_LABEL = { online: '在线', idle: '待命', offline: '离线' };
+
+// ---------- 招呼语 ----------
+const GREETINGS = [
+  '收到指令，准备执行。',
+  '正在分析目标数据…',
+  '墨境网络链路正常。',
+  '感知到新的信息流。',
+  '等待下一步调度。',
+  '环境扫描完成，一切稳定。',
+  '战术节点已就绪。',
+  '灵识感知范围内无异常。',
+  '数据流解析中，请稍候。',
+  '领域监控已激活。',
+];
+const SYSTEM_MSGS = [
+  '⚙ 系统自检完成 · 所有节点正常',
+  '📡 墨境中枢心跳同步 · 延迟 12ms',
+  '🔄 全局状态已同步',
+  '🛡 防护结界已强化',
+  '🌐 外部数据链路已建立',
+];
+
+// ---------- 状态 ----------
+let messages  = [];
+let stats     = {};   // { agentId: { count, active } }
+let totalMsgs = 0;
+
+// 初始化 agent 统计
+AGENTS.forEach(a => { stats[a.id] = { count: 0, active: 0 }; });
+
+// ============================================================
+//  渲染
+// ============================================================
+
+/** 渲染 Agent 列表 */
+function renderAgents() {
+  const el = document.getElementById('agentList');
+  const online = AGENTS.filter(a => a.status === 'online');
+  document.getElementById('agentCount').textContent = AGENTS.length;
+
+  el.innerHTML = AGENTS.map(a => {
+    const statusCls = a.status === 'online' ? 'online' : '';
+    const dotCls = a.status === 'online' ? '' : (a.status === 'idle' ? 'idle' : 'offline');
+    const pulseCls = a.status === 'online' ? '' : 'off';
+    return `
+      <div class="agent-card ${statusCls}" data-id="${a.id}">
+        <div class="avatar role-${a.role}">${a.emoji}</div>
+        <div class="info">
+          <div class="name">
+            ${a.name}
+            <span class="tag">${a.tag}</span>
+          </div>
+          <div class="status-row">
+            <span class="status-dot ${dotCls}"></span>
+            <span class="status-text">${STATUS_LABEL[a.status]}</span>
+          </div>
+        </div>
+        <div class="heartbeat">
+          <div class="pulse ${pulseCls}"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/** 渲染统计面板 */
+function renderStats() {
+  const el = document.getElementById('statsContent');
+  const total = Object.values(stats).reduce((s, v) => s + v.count, 0);
+  const activeCount = Object.values(stats).filter(v => v.active > 0).length;
+
+  // 排行
+  const sorted = Object.entries(stats)
+    .map(([id, v]) => ({ id, ...v, name: AGENTS.find(a => a.id === id) }))
+    .filter(s => s.name)
+    .sort((a, b) => b.count - a.count);
+  const topCount = sorted.length > 0 ? sorted[0].count : 0;
+
+  const rankHtml = sorted.map((s, i) => {
+    const pct = topCount > 0 ? (s.count / topCount) * 100 : 0;
+    const posCls = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+    const top3 = ['🥇','🥈','🥉'];
+    return `
+      <div class="rank-item">
+        <span class="rank-pos ${posCls}">${i < 3 ? top3[i] : (i + 1)}</span>
+        <div class="rank-avatar">${s.name.emoji}</div>
+        <span class="rank-name">${s.name.name}</span>
+        <div class="rank-bar-wrap">
+          <div class="rank-bar" style="width:${pct}%"></div>
+        </div>
+        <span class="rank-count">${s.count}</span>
+      </div>
+    `;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">💬 总发言数</div>
+      <div class="stat-number">${total}<span class="unit">条</span></div>
+      <div class="stat-sub">活跃 Agent ${activeCount} / ${AGENTS.length}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">📈 活跃度排行</div>
+      ${rankHtml || '<div style="color:var(--text-dim);font-size:12px;padding:8px 0;">暂无数据</div>'}
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">⏱ 会话时长</div>
+      <div class="stat-number" id="sessionTime">00:00<span class="unit"></span></div>
+      <div class="stat-sub" id="msgRate">0 条/分</div>
+    </div>
+  `;
+}
+
+/** 添加一条消息 */
+function addMessage(agentId, text) {
+  const agent = AGENTS.find(a => a.id === agentId) || AGENTS[0];
+  const time = new Date();
+  const ts = time.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  const msg = { agentId, text, time, ts, agent };
+  messages.push(msg);
+  totalMsgs++;
+
+  // 更新统计
+  stats[agentId].count = (stats[agentId].count || 0) + 1;
+  stats[agentId].active = (stats[agentId].active || 0) + 1;
+
+  // 中栏渲染
+  const stream = document.getElementById('messageStream');
+  const div = document.createElement('div');
+  div.className = 'msg';
+  div.innerHTML = `
+    <div class="msg-avatar">${agent.emoji}</div>
+    <div class="msg-body">
+      <div class="msg-header">
+        <span class="msg-name">${agent.name}</span>
+        <span class="msg-time">${ts}</span>
+      </div>
+      <div class="msg-text">${text}</div>
+    </div>
+  `;
+  stream.appendChild(div);
+  stream.scrollTop = stream.scrollHeight;
+
+  document.getElementById('msgCount').textContent = messages.length;
+  renderStats();
+}
+
+/** 添加系统消息 */
+function addSystemMsg(text) {
+  const time = new Date();
+  const ts = time.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  messages.push({ system: true, text, time, ts });
+
+  const stream = document.getElementById('messageStream');
+  const div = document.createElement('div');
+  div.className = 'msg system';
+  div.innerHTML = `
+    <div class="msg-body">
+      <div class="msg-text">${text} · ${ts}</div>
+    </div>
+  `;
+  stream.appendChild(div);
+  stream.scrollTop = stream.scrollHeight;
+
+  document.getElementById('msgCount').textContent = messages.length;
+}
+
+/** 随机消息 */
+function addRandomMsg() {
+  const online = AGENTS.filter(a => a.status !== 'offline');
+  if (!online.length) return;
+  const agent = online[Math.floor(Math.random() * online.length)];
+  const text = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+  addMessage(agent.id, text);
+}
+
+function addRandomMsgBatch() {
+  for (let i = 0; i < 5; i++) {
+    setTimeout(addRandomMsg, i * 80);
+  }
+}
+
+function clearMessages() {
+  messages = [];
+  document.getElementById('messageStream').innerHTML = '';
+  document.getElementById('msgCount').textContent = '0';
+  // 重置统计
+  AGENTS.forEach(a => { stats[a.id] = { count: 0, active: 0 }; });
+  renderStats();
+  // 加一条系统消息
+  addSystemMsg('🗑 消息记录已清空');
+}
+
+// ============================================================
+//  心跳脉冲动画
+// ============================================================
+function heartbeatTick() {
+  const cards = document.querySelectorAll('.agent-card.online .heartbeat .pulse');
+  cards.forEach(el => {
+    el.style.animation = 'none';
+    void el.offsetWidth; // reflow
+    el.style.animation = 'pulse-beat 1.5s ease-in-out infinite';
+  });
+}
+
+// ============================================================
+//  定时自动消息 & 会话计时
+// ============================================================
+let sessionStart = Date.now();
+
+function updateTimer() {
+  const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+  const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const s = String(elapsed % 60).padStart(2, '0');
+  const timerEl = document.getElementById('sessionTime');
+  if (timerEl) timerEl.innerHTML = `${m}:${s}<span class="unit"></span>`;
+
+  const rateEl = document.getElementById('msgRate');
+  if (rateEl) {
+    const mins = elapsed / 60;
+    const rate = mins > 0 ? (totalMsgs / mins).toFixed(1) : 0;
+    rateEl.textContent = `${rate} 条/分`;
+  }
+}
+
+// ============================================================
+//  初始化
+// ============================================================
+renderAgents();
+renderStats();
+
+// 加入几条欢迎消息
+addSystemMsg('🏯 墨境指挥中心已启动');
+setTimeout(() => {
+  addSystemMsg('⚔ 欢迎，指挥官。所有 Agent 就绪。');
+}, 400);
+setTimeout(() => {
+  addRandomMsg();
+}, 1000);
+setTimeout(() => {
+  addRandomMsg();
+  addRandomMsg();
+}, 1800);
+
+// 每 8-15 秒随机消息
+setInterval(() => {
+  if (Math.random() < 0.6) addRandomMsg();
+  if (Math.random() < 0.15) addSystemMsg(SYSTEM_MSGS[Math.floor(Math.random() * SYSTEM_MSGS.length)]);
+}, 8000);
+
+// 心跳动画刷新
+setInterval(heartbeatTick, 1500);
+
+// 会话计时
+setInterval(updateTimer, 1000);
+
+// 实时状态指示
+setInterval(() => {
+  const dot = document.querySelector('.top-bar .live-dot');
+  if (dot) {
+    dot.style.animation = 'none';
+    void dot.offsetWidth;
+    dot.style.animation = 'blink 1.5s ease-in-out infinite';
+  }
+}, 1500);
+</script>
+</body>
+</html>

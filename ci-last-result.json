@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "status": "PASS",
+  "timestamp": "2026-06-25 10:11:06",
+  "details": {
+    "build": "已跳过",
+    "output_files": "✅ 完整",
+    "merge_conflicts": "✅ 无"
+  }
+}

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>圆桌会议室 · 墨境</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#faf9f6;color:#111}
+.container{max-width:900px;margin:0 auto;padding:24px}
+h1{font-size:22px;margin-bottom:4px}.sub{color:#888;font-size:12px;margin-bottom:24px}
+
+/* 会议卡片 */
+.session{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;border:1px solid #ebe5dd;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.session-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.session-icon{font-size:28px}
+.session-topic{font-weight:700;font-size:16px;flex:1}
+.session-meta{font-size:11px;color:#888}
+.status-badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.status-open{background:#fef3c7;color:#d97706}
+.status-closed{background:#dcfce7;color:#16a34a}
+
+/* 辩论轮次 */
+.round{margin-bottom:16px}
+.round-title{font-size:12px;color:#aaa;font-weight:600;text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #f5f5f5}
+
+/* 发言气泡 */
+.statement{display:flex;gap:10px;margin-bottom:8px;padding:8px 12px;border-radius:10px;background:#f9fafb}
+.statement:hover{background:#f0fdf4}
+.stmt-avatar{font-size:20px;flex-shrink:0;width:28px;text-align:center}
+.stmt-body{flex:1}
+.stmt-speaker{font-size:12px;font-weight:600;color:#6b8c6e}
+.stmt-angle{font-size:10px;color:#aaa;margin-left:6px}
+.stmt-content{font-size:13px;color:#444;margin-top:4px;line-height:1.5}
+
+/* 结论 */
+.conclusion{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:12px;padding:14px 18px;margin-top:12px;border:1px solid #bbf7d0}
+.conclusion-title{font-size:11px;color:#16a34a;font-weight:600;margin-bottom:4px}
+.conclusion-text{font-size:13px;color:#333;line-height:1.5}
+
+.empty{text-align:center;color:#aaa;padding:60px 20px;font-size:14px}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.refresh{font-size:10px;color:#aaa;text-align:right;margin-top:8px}a{color:#6b8c6e}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🏛️ 圆桌会议室</h1>
+<div class="sub">Agent 多轮辩论 — 每轮发言实时可见</div>
+
+<div id="sessions">
+<div class="empty"><div class="empty-icon">🔄</div>加载中...</div>
+</div>
+
+<div class="refresh">每5秒刷新 · JSON 数据源: deliberoom.json</div>
+</div>
+
+<script>
+var path = window.location.pathname;
+var apiUrl = path.startsWith('/deliberation') ? '../deliberoom.json' : 'deliberoom.json';
+
+function load(){
+fetch('http://localhost:8901/deliberoom.json')
+.then(r=>r.json()).then(data=>{
+var html='';
+data.forEach(function(s){
+var statusClass = s.status==='closed'?'status-closed':'status-open';
+var statusText = s.status==='closed'?'已结束':'进行中';
+html+='<div class="session"><div class="session-header"><div class="session-icon">🏛️</div><div class="session-topic">'+s.topic+'<span class="status-badge '+statusClass+'" style="margin-left:8px">'+statusText+'</span></div><div class="session-meta">'+s.participants.join(' · ')+' &nbsp;|&nbsp; '+s.rounds+'轮辩论</div></div>';
+
+if(s.rounds) s.rounds.forEach(function(r){
+html+='<div class="round"><div class="round-title">第 '+r.number+' 轮</div>';
+r.statements.forEach(function(st){
+html+='<div class="statement"><div class="stmt-avatar">'+getAvatar(st.speaker)+'</div><div class="stmt-body"><span class="stmt-speaker">'+st.speaker+'</span><span class="stmt-angle">— '+st.angle+'</span><div class="stmt-content">'+st.content+(st.responds_to?'<br><span style="font-size:10px;color:#aaa">↩ 回应: '+st.responds_to+'</span>':'')+'</div></div></div>';
+});
+html+='</div>';
+});
+
+if(s.conclusion) html+='<div class="conclusion"><div class="conclusion-title">📋 最终结论</div><div class="conclusion-text">'+s.conclusion+'</div></div>';
+html+='</div>';
+});
+document.getElementById('sessions').innerHTML=html||'<div class="empty"><div class="empty-icon">🏛️</div>暂无会议记录</div>';
+}).catch(function(e){
+document.getElementById('sessions').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>无法加载<br><span style="font-size:12px">请确保已启动会议室服务器 (8901端口)</span></div>';
+});
+}
+
+function getAvatar(name){
+var m={总管:'🧭',后端:'⚙️',前端:'🎨',UX:'👁️',UI:'🎯',QA:'🧪',架构:'🔍',产品:'📊',提示词:'🧠',协议执行官:'🛡️'};
+return m[name]||'💬';
+}
+load();setInterval(load,5000);
+</script>
+</body>
+</html>

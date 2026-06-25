@@ -1,0 +1,71 @@
+{
+  "timestamp": "2026-06-25T08:04:31Z",
+  "baseUrl": "http://localhost:3000",
+  "serverAlive": true,
+  "total": 6,
+  "passed": 6,
+  "failed": 0,
+  "summary": "ALL_PASS",
+  "results": [
+    {
+      "name": "continue",
+      "path": "/api/ai/continue",
+      "method": "POST",
+      "body": "{\"context\":\"test\"}",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "result": "PASS",
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "polish",
+      "path": "/api/ai/polish",
+      "method": "POST",
+      "body": "{\"text\":\"测试文字\"}",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "result": "PASS",
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "expand",
+      "path": "/api/ai/expand",
+      "method": "POST",
+      "body": "{\"text\":\"测试文字\"}",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "result": "PASS",
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "brainstorm",
+      "path": "/api/ai/brainstorm",
+      "method": "POST",
+      "body": "{\"genre\":\"都市\"}",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "result": "PASS",
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "inspire",
+      "path": "/api/ai/inspire",
+      "method": "POST",
+      "body": "{\"mode\":\"direct-diverge\"}",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "result": "PASS",
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "alchemy",
+      "path": "/api/ai/alchemy",
+      "method": "POST",
+      "body": "{\"genre\":\"玄幻\"}",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "result": "PASS",
+      "detail": "HTTP 200"
+    }
+  ]
+}

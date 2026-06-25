@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🏛️ 墨境圆桌会议</title>
+<style>
+:root{--moss:#6b8c6e;--gold:#d4a853;--wood:#5c4033;--parchment:#f5f0e8;--dark:#1a1a2e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(ellipse at center,#2d1f14 0%,#1a0f0a 100%);font-family:"PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden;height:100vh;user-select:none}
+
+/* 顶部标题栏 */
+.titlebar{position:fixed;top:0;left:0;right:0;z-index:100;background:linear-gradient(180deg,rgba(0,0,0,.7),transparent);padding:16px 24px;display:flex;align-items:center;gap:12px}
+.titlebar h1{color:#d4a853;font-size:20px;text-shadow:0 0 20px rgba(212,168,83,.3)}
+.titlebar .sub{color:#998866;font-size:11px}
+.titlebar .spacer{flex:1}
+.titlebar a{color:#6b8c6e;font-size:11px;text-decoration:none;padding:6px 12px;border:1px solid #3a2a1a;border-radius:6px;background:rgba(0,0,0,.3)}
+
+/* 中央圆桌 */
+.table-container{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:320px;height:320px}
+.table{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 40% 40%,#7a5a40,#4a2a1a);box-shadow:0 0 80px rgba(0,0,0,.5),0 0 40px rgba(212,168,83,.1),inset 0 0 80px rgba(0,0,0,.3)}
+.table-inner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,#6b8c6e,#3a5a3a);box-shadow:0 0 30px rgba(107,140,110,.3);display:flex;align-items:center;justify-content:center;font-size:40px;animation:pulse 3s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 30px rgba(107,140,110,.3)}50%{box-shadow:0 0 60px rgba(107,140,110,.5)}}
+
+/* 席位 */
+.seat{position:absolute;width:80px;height:100px;transition:all .4s}
+.seat.active .avatar-ring{border-color:#d4a853!important;box-shadow:0 0 20px rgba(212,168,83,.4)!important}
+.seat.active .nameplate{background:linear-gradient(135deg,#d4a853,#8b6914)!important;color:#fff!important}
+.seat.speaking{animation:bounce .5s}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.avatar-ring{width:60px;height:60px;border-radius:50%;border:3px solid #3a2a1a;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:26px;background:rgba(0,0,0,.5);transition:all .3s}
+.nameplate{text-align:center;font-size:10px;color:#998866;background:rgba(0,0,0,.4);border-radius:8px;padding:3px 8px;max-width:80px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+
+/* 发言气泡 */
+.bubble-container{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:200;max-width:600px;animation:slideUp .3s}
+@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.bubble{background:rgba(0,0,0,.85);border:1px solid #d4a853;border-radius:16px;padding:14px 20px;color:#e8d5b0;font-size:13px;line-height:1.6;box-shadow:0 4px 30px rgba(0,0,0,.5)}
+.bubble-speaker{color:#d4a853;font-weight:600;font-size:11px;margin-bottom:4px}
+.bubble-angle{color:#888;font-size:10px}
+
+/* 底栏 */
+.bottombar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:linear-gradient(0deg,rgba(0,0,0,.8),transparent);padding:16px 24px;display:flex;align-items:center;gap:10px}
+.bottombar button{padding:8px 18px;border:1px solid #d4a853;border-radius:20px;background:rgba(212,168,83,.1);color:#d4a853;font-size:12px;cursor:pointer;transition:all .2s}
+.bottombar button:hover{background:rgba(212,168,83,.2)}
+.session-select{background:rgba(0,0,0,.4);border:1px solid #3a2a1a;border-radius:8px;padding:6px 12px;color:#998866;font-size:12px}
+.session-select option{background:#1a0f0a}
+
+/* 参会名单 */
+.attendees{position:fixed;right:0;top:80px;z-index:100;padding:12px;display:flex;flex-direction:column;gap:6px}
+.attendee-item{display:flex;align-items:center;gap:8px;font-size:10px;color:#998866;padding:4px 10px;background:rgba(0,0,0,.3);border-radius:6px;border:1px solid transparent}
+.attendee-item.current{border-color:#d4a853;color:#d4a853}
+.attendee-dot{width:6px;height:6px;border-radius:50%}
+.attendee-dot.spoke{background:#d4a853}
+.attendee-dot.waiting{background:#555}
+
+/* 加载旋转动画 */
+#tableArea.loading .table-inner{animation:mojispin 2s linear infinite!important}
+@keyframes mojispin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+</style>
+</head><body>
+
+<div class="titlebar">
+<h1>🏛️ 墨境圆桌会议</h1>
+<span class="sub" id="sessionTitle">加载中...</span>
+<span class="spacer"></span>
+<a href="http://localhost:8899">← 全景</a>
+<a href="http://localhost:8901">📋 列表</a>
+</div>
+
+<div class="table-container loading" id="tableArea"><div class="table"><div class="table-inner">🌙</div></div></div>
+
+<div class="bubble-container" id="bubbleArea" style="display:none"></div>
+
+<div class="attendees" id="attendeeList"></div>
+
+<div class="bottombar">
+<select class="session-select" id="sessionPicker" onchange="switchSession(this.value)"></select>
+<button onclick="prevMsg()" id="prevBtn" disabled>◀ 上一条</button>
+<button onclick="nextMsg()" id="nextBtn">下一条 ▶</button>
+<span style="color:#666;font-size:10px;margin-left:8px" id="msgCounter"></span>
+<span class="spacer" style="flex:1"></span>
+<button onclick="autoPlay()" id="autoBtn">▶ 自动播放</button>
+</div>
+
+<script>
+// 角色头像
+var AVATARS={总管:'🧭',后端技术负责人:'⚙️',前端技术负责人:'🎨',架构审查员:'🔍',提示词系统专家:'🧠',产品经理:'📊',UI设计师:'🎯',QA测试工程师:'🧪',UX体验员:'👁️',协议执行官:'🛡️',组织发展官:'🌱',DevOps工程师:'🔧',编辑器专责:'✂️',增长分析师:'📈',AI模型评测员:'🤖',API逻辑工程师:'🔌',页面组件工程师:'📄',动效交互设计师:'✨',品牌插画师:'🖌️'};
+
+var session=null, allSessions=[], currentMsgIndex=0, allMsgs=[], autoTimer=null;
+
+function loadSessions(){
+fetch('http://localhost:8901/deliberoom.json').then(r=>r.json()).then(sessions=>{
+document.getElementById('tableArea').classList.remove('loading');
+allSessions=sessions;
+var sel=document.getElementById('sessionPicker');
+if(sessions.length===0){
+document.getElementById('sessionTitle').textContent='暂无会议';
+document.getElementById('bubbleArea').style.display='block';
+document.getElementById('bubbleArea').innerHTML='<div class="bubble"><div class="bubble-speaker">📋 提示</div>暂无会议，先用 deliberoom.py start 创建</div>';
+sel.innerHTML='<option>— 无会议 —</option>';
+return;
+}
+sel.innerHTML=sessions.map(s=>'<option value="'+s.id+'">'+s.topic.substring(0,40)+' ('+s.status+')</option>').join('');
+sel.value=sessions[0].id;switchSession(sessions[0].id);
+}).catch(function(err){
+document.getElementById('tableArea').classList.remove('loading');
+document.getElementById('sessionTitle').textContent='❌ 会议服务器未启动';
+document.getElementById('bubbleArea').style.display='block';
+document.getElementById('bubbleArea').innerHTML='<div class="bubble" style="border-color:#e74c3c"><div class="bubble-speaker" style="color:#e74c3c">⚠️ 连接失败</div>会议服务器未启动，请先启动 deliberoom.py</div>';
+});
+}
+
+function switchSession(id){
+session=allSessions.find(s=>s.id===id);
+if(!session)return;
+document.getElementById('sessionTitle').textContent=session.topic+' · '+session.participants.length+'人 · '+session.rounds.length+'轮';
+// 收集所有发言
+allMsgs=[];
+session.rounds.forEach(function(r){r.statements.forEach(function(s){allMsgs.push(s);});});
+currentMsgIndex=allMsgs.length-1;
+renderParticipants();
+if(allMsgs.length>0){showMsg(currentMsgIndex);}
+updateButtons();
+// 停止自动播放
+if(autoTimer){clearInterval(autoTimer);autoTimer=null;document.getElementById('autoBtn').textContent='▶ 自动播放';}
+}
+
+function renderParticipants(){
+var html='';
+var spokeSet={};
+allMsgs.forEach(function(m){spokeSet[m.speaker]=true;});
+session.participants.forEach(function(p){
+var spoke=spokeSet[p];
+html+='<div class="attendee-item'+(spoke?' current':'')+'"><div class="attendee-dot '+(spoke?'spoke':'waiting')+'"></div>'+p+'</div>';
+});
+document.getElementById('attendeeList').innerHTML=html;
+// 渲染席位
+renderSeats(session.participants);
+}
+
+function renderSeats(participants){
+var area=document.getElementById('tableArea');
+var count=Math.min(participants.length,12);
+var radius=170;
+var centerX=160,centerY=160;
+var angleStep=360/count;
+var html='<div class="table"><div class="table-inner">🌙</div></div>';
+for(var i=0;i<count;i++){
+var a=angleStep*i-90;
+var rad=a*Math.PI/180;
+var x=centerX+radius*Math.cos(rad)-40;
+var y=centerY+radius*Math.sin(rad)-50;
+var p=participants[i];
+var avatar=AVATARS[p]||'💬';
+var spoken=allMsgs.some(function(m){return m.speaker===p;});
+var lastSpeaker=allMsgs.length>0&&allMsgs[currentMsgIndex]&&allMsgs[currentMsgIndex].speaker===p;
+html+='<div class="seat'+(spoken?' active':'')+(lastSpeaker?' speaking':'')+'" style="left:'+x+'px;top:'+y+'px"><div class="avatar-ring">'+avatar+'</div><div class="nameplate">'+p.substring(0,6)+'</div></div>';
+}
+area.innerHTML=html;
+}
+
+function showMsg(idx){
+if(!allMsgs[idx])return;
+var m=allMsgs[idx];
+currentMsgIndex=idx;
+// 气泡
+document.getElementById('bubbleArea').style.display='block';
+document.getElementById('bubbleArea').innerHTML='<div class="bubble"><div class="bubble-speaker">'+AVATARS[m.speaker]+' '+m.speaker+' <span class="bubble-angle">— '+m.angle+'</span></div>'+m.content+'</div>';
+// 席位高亮
+renderSeats(session.participants);
+updateButtons();
+}
+
+function nextMsg(){if(currentMsgIndex<allMsgs.length-1)showMsg(currentMsgIndex+1);}
+function prevMsg(){if(currentMsgIndex>0)showMsg(currentMsgIndex-1);}
+
+function updateButtons(){
+document.getElementById('prevBtn').disabled=currentMsgIndex<=0;
+document.getElementById('nextBtn').disabled=currentMsgIndex>=allMsgs.length-1;
+document.getElementById('msgCounter').textContent=(currentMsgIndex+1)+'/'+allMsgs.length;
+}
+
+function autoPlay(){
+if(autoTimer){clearInterval(autoTimer);autoTimer=null;document.getElementById('autoBtn').textContent='▶ 自动播放';return;}
+document.getElementById('autoBtn').textContent='⏸ 停止';
+currentMsgIndex=0;
+showMsg(0);
+autoTimer=setInterval(function(){
+if(currentMsgIndex>=allMsgs.length-1){clearInterval(autoTimer);autoTimer=null;document.getElementById('autoBtn').textContent='▶ 自动播放';return;}
+showMsg(currentMsgIndex+1);
+},4000);
+}
+loadSessions();
+</script>
+</body></html>

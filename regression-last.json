@@ -1,0 +1,97 @@
+{
+  "title": "墨境自动化回归检查",
+  "timestamp": "2026-06-25T16:03:47.048777",
+  "base_url": "http://localhost:3000",
+  "summary": {
+    "total": 8,
+    "passed": 8,
+    "failed": 0,
+    "score_pct": 100.0,
+    "elapsed_seconds": 13.97
+  },
+  "checks": [
+    {
+      "type": "page",
+      "label": "首页",
+      "path": "/",
+      "method": "GET",
+      "expected": 200,
+      "actual": 200,
+      "passed": true,
+      "error": null
+    },
+    {
+      "type": "page",
+      "label": "登录页",
+      "path": "/login",
+      "method": "GET",
+      "expected": 200,
+      "actual": 200,
+      "passed": true,
+      "error": null
+    },
+    {
+      "type": "page",
+      "label": "书桌",
+      "path": "/desk",
+      "method": "GET",
+      "expected": 200,
+      "actual": 200,
+      "passed": true,
+      "error": null
+    },
+    {
+      "type": "page",
+      "label": "后台",
+      "path": "/admin",
+      "method": "GET",
+      "expected": 200,
+      "actual": 200,
+      "passed": true,
+      "error": null
+    },
+    {
+      "type": "page",
+      "label": "页面编辑器",
+      "path": "/page-editor.html?path=/",
+      "method": "GET",
+      "expected": 200,
+      "actual": 200,
+      "passed": true,
+      "error": null
+    },
+    {
+      "type": "api",
+      "label": "AI 布局 API",
+      "path": "/api/ai/layout",
+      "method": "POST",
+      "body": "{\"prompt\":\"测试页面\"}",
+      "expected": 200,
+      "actual": 200,
+      "passed": true,
+      "error": null
+    },
+    {
+      "type": "api",
+      "label": "工具广场元数据 API",
+      "path": "/api/tools",
+      "method": "GET",
+      "body": null,
+      "expected": 200,
+      "actual": 200,
+      "passed": true,
+      "error": null
+    },
+    {
+      "type": "api",
+      "label": "风格规则中心 API",
+      "path": "/api/rules/styles",
+      "method": "GET",
+      "body": null,
+      "expected": 200,
+      "actual": 200,
+      "passed": true,
+      "error": null
+    }
+  ]
+}

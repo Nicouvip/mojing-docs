@@ -1,0 +1,58 @@
+{
+  "id": "0625-1311",
+  "topic": "如何彻底解决task小弟max_steps超限？",
+  "participants": [
+    "总管",
+    "架构",
+    "DevOps",
+    "组织发展官",
+    "前端",
+    "后端"
+  ],
+  "rounds": [
+    {
+      "number": 1,
+      "statements": [
+        {
+          "speaker": "组织发展官",
+          "angle": "解法",
+          "content": "用户提出两个方向:①检查点续传——快到时存进度下一个接盘②监督接手——别人看着快停了提前接手。两个都可行，那哪个更好?我认为两者都做:短期用检查点续传(简单可行)，长期加监督接手(需要改monitor轮询逻辑)。",
+          "responds_to": "",
+          "timestamp": "2026-06-25T13:11:12.512311"
+        },
+        {
+          "speaker": "DevOps",
+          "angle": "技术",
+          "content": "检查点续传技术上已有基础设施:Reasonix task()自带continue_from参数+有.ckpt/turn-N.json文件。最简实现在cluster.py加一个函数扫描session文件末尾检测paused after X rounds→写resume-queue.json→monitor轮询到就提醒总管续传。关键在于:谁来扫描?monitor已经在30秒轮询里了，加一行调用即可。",
+          "responds_to": "",
+          "timestamp": "2026-06-25T13:11:12.522620"
+        },
+        {
+          "speaker": "前端",
+          "angle": "体验",
+          "content": "还有第三条路:不用等停了再续。在任务prompt里加一条指令——\"当你发现自己已经用了12步还没完成，立即把剩余工作列表写到checkpoint文件然后停止\"。这样主动提前停止，比被动检测更省步数。相当于给自己设一个10步时的软提醒。",
+          "responds_to": "",
+          "timestamp": "2026-06-25T13:11:12.532537"
+        },
+        {
+          "speaker": "架构",
+          "angle": "系统",
+          "content": "同意第三条路最优。还可以更激进:为什么每个task只能做一件事?因为prompt太长它花前5步理解上下文。如果我们把每个角色的context/*.md记忆做得更好——每次编码任务前先注入\"上次做到哪了+文件结构速查+代码模板\"，省掉探索步骤。这样原来15步的任务5步就能做完。",
+          "responds_to": "",
+          "timestamp": "2026-06-25T13:11:12.544998"
+        },
+        {
+          "speaker": "总管",
+          "angle": "综合",
+          "content": "三个方案互补:①主动检查点(前端)agent在10步时自己写progress.md停手②上下文预注入(架构)每次派活前从context读记忆注入prompt省探索③被动续传(DevOps)剩余情况monitor扫描自动提醒。三者结合可以减80%的超限。不选最优——三个都要。",
+          "responds_to": "",
+          "timestamp": "2026-06-25T13:11:12.556287"
+        }
+      ]
+    }
+  ],
+  "status": "closed",
+  "created": "2026-06-25T13:11:12.475263",
+  "conclusion": "三层防御:①主动检查点(10步自停)②上下文预注入(省探索步骤)③被动续传(monitor扫描)。三管齐下。",
+  "closed": "2026-06-25T13:11:12.570300"
+}

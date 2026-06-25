@@ -1,0 +1,65 @@
+{
+  "id": "0625-1013",
+  "topic": "集团下一步最优先补什么？",
+  "participants": [
+    "总管",
+    "后端",
+    "前端",
+    "UX",
+    "QA",
+    "架构",
+    "产品",
+    "提示词"
+  ],
+  "rounds": [
+    {
+      "number": 1,
+      "statements": [
+        {
+          "speaker": "后端",
+          "angle": "基建",
+          "content": "Supabase真实接入+CI/CD流水线",
+          "responds_to": "",
+          "timestamp": "2026-06-25T10:13:15.379147"
+        },
+        {
+          "speaker": "UX",
+          "angle": "体验",
+          "content": "用户一站式仪表盘，不用翻协议",
+          "responds_to": "",
+          "timestamp": "2026-06-25T10:13:15.391726"
+        },
+        {
+          "speaker": "架构",
+          "angle": "风险",
+          "content": "总管单点故障——指定副手",
+          "responds_to": "",
+          "timestamp": "2026-06-25T10:13:15.407501"
+        },
+        {
+          "speaker": "QA",
+          "angle": "质量",
+          "content": "自动化回归测试覆盖全站页面+API",
+          "responds_to": "",
+          "timestamp": "2026-06-25T10:13:15.425283"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "statements": [
+        {
+          "speaker": "总管",
+          "angle": "合成",
+          "content": "第1轮共识：4项全是刚需。排期：先数据库(后端)+仪表盘(UCD)，再降级(架构)+回归(QA)。2周内全部补上。",
+          "responds_to": "",
+          "timestamp": "2026-06-25T10:13:15.455194"
+        }
+      ]
+    }
+  ],
+  "status": "closed",
+  "created": "2026-06-25T10:13:15.359768",
+  "conclusion": "4项基础设施补全：Supabase接入/用户仪表盘/总管降级协议/自动化回归。2周交付。",
+  "closed": "2026-06-25T10:13:15.471773"
+}
