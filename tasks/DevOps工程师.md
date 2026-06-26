@@ -1,3 +1,7 @@
+---
+trustLevel: 2
+---
+
 【强制技能 — executing-plans + systematic-debugging】
 ────────────────────────
 
@@ -8,3 +12,6 @@
 2. 跑 pnpm build → 跑 auto-regression.py → 跑 tsc --noEmit
 3. 任一失败发 decisions.jsonl 告警
 4. 输出到 output/DevOps-CI流水线.md
+
+## 完成后必须
+把结果写入 output/DevOps工程师-任务名.md

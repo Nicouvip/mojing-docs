@@ -1,0 +1,15 @@
+{
+  "title": "测试融合接口",
+  "messages": [
+    {
+      "role": "user",
+      "content": "测试融合接口"
+    },
+    {
+      "role": "system",
+      "content": "分配给 测试"
+    }
+  ],
+  "created": "2026-06-26T14:14:51.966Z",
+  "updated": "2026-06-26T14:14:51.966Z"
+}

@@ -1,3 +1,7 @@
+---
+trustLevel: 2
+---
+
 # D组-基础组长
 
 【强制技能 — executing-plans】

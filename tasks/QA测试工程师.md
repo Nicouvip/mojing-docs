@@ -1,12 +1,25 @@
-# QA测试工程师 — 当前任务
+---
+trustLevel: 2
+---
 
-> 2026-06-26
+【强制技能 — verification-before-completion · systematic-debugging · gstack】
+────────────────────────
 
-## 任务
-1. curl 验证 localhost:3000 全部页面 HTTP 200
-2. curl POST 验证 4个 AI 端点
-3. 验证编辑器基本操作（新建章/打字/保存/切换）
-4. 出 QA 报告到 output/QA-回归.md
+T-P1-1：回归测试 + 验证已修复项
 
-## 技能包
-verification-before-completion · systematic-debugging
+1. 验证以下已修复项是否真的好了：
+   - writing-editor无限循环
+   - 登录页苔绿玻璃样式
+   - 角色面板显示角色列表
+   - 后端认证localStorage fallback
+
+2. 回归测试全部页面：
+   - 首页 200
+   - 编辑器 200（进demo-1）
+   - 登录/注册页 200
+   - /admin 200
+   - /works /features /templates /tools /cases /library 200
+
+3. 输出Bug清单
+
+输出：output/QA-回归测试.md

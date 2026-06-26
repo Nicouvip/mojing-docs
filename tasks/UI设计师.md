@@ -1,23 +1,21 @@
-【强制技能 — ui-ux-pro-max + frontend-design + brand-guidelines】
+---
+trustLevel: 2
+---
+
+【强制技能 — ui-ux-pro-max · frontend-design · brand-guidelines】
 ────────────────────────
 
-GrapesJS 编辑器视觉审查 — 现在就可以做
+T-P1-1：弹窗统一 + 玻璃质感升级
 
-编辑器地址：http://localhost:3000/page-editor?path=/
+1. 弹窗统一规范：
+   - 内边距 24px
+   - 圆角 20px
+   - 统一遮罩（bg-overlay backdrop-blur-sm）
+   - 所有弹窗（brainstorm/trash/report等）统一改
 
-1. 打开页面 → gstack snapshot 截图
-2. 检查：苔绿品牌色是否贯穿
-3. 检查：三栏布局是否合理（左组件/中画布/右样式）
-4. 检查：中文化是否完整
-5. 检查：画布首页内容显示是否正确
-6. 出审查报告
+2. 玻璃质感升级：
+   - 现有 glass-panel 类加微妙的 border 高光线（rgba(255,255,255,0.5) 顶部高光）
+   - 暗色主题适配
 
-输出到 output/UI设计师-GrapesJS审查.md
-
-────────────────────────
-## 📋 微任务激活 — 2026-06-22
-
-**【微任务】暗色模式对比度审计**
-1. 在暗色模式下逐页检查文本/背景对比度（WCAG AA 标准）
-2. 列出所有低于 4.5:1 的前景/背景组合
-3. 输出修复清单到 `output/UI设计师-对比度审计.md`
+不改功能逻辑，只改样式。
+输出：output/UI-弹窗统一+玻璃升级.md

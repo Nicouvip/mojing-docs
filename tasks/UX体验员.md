@@ -1,12 +1,16 @@
-# UX体验员 — 当前任务
+---
+trustLevel: 2
+---
 
-> 2026-06-26
+【强制技能 — gstack · webapp-testing · ui-ux-pro-max】
+────────────────────────
 
-## 任务
-1. 打开 localhost:5176/static/office/ 像素办公室
-2. gstack 截图对比 AgentFleet 原版和我们的版本
-3. 走查首页、编辑器、登录页交互
-4. 出 UX 走查报告到 output/UX-走查.md
+T-P1-1：全站交互走查 + 截图
 
-## 技能包
-gstack · webapp-testing · ui-ux-pro-max
+走查全部页面，输出体验问题：
+1. 首页 → 编辑器 → 书桌 → Admin → 登录/注册
+2. 每个页面截图（gstack）
+3. 标注交互问题：点击无反馈、布局错位、加载无提示、空状态不合理
+4. 列出P0/P1/P2分级
+
+输出：output/UX-全站走查.md

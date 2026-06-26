@@ -1,3 +1,7 @@
+---
+trustLevel: 2
+---
+
 # E组-测试组长
 
 【强制技能 — webapp-testing + systematic-debugging】

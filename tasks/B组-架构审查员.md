@@ -1,3 +1,7 @@
+---
+trustLevel: 2
+---
+
 # B组-架构审查员
 
 【强制技能 — chinese-code-review + flow-review】

@@ -1,3 +1,7 @@
+---
+trustLevel: 1
+---
+
 【强制技能 — executing-plans + flow-review】
 ────────────────────────
 

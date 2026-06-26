@@ -1,3 +1,7 @@
+---
+trustLevel: 2
+---
+
 # A组-前端技术负责人
 
 【强制技能 — frontend-design】

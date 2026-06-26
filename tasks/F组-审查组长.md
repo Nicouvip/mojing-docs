@@ -1,3 +1,7 @@
+---
+trustLevel: 2
+---
+
 # F组-审查组长
 
 【强制技能 — flow-review + chinese-code-review】

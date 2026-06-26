@@ -1,3 +1,7 @@
+---
+trustLevel: 2
+---
+
 # G组-文档组长
 
 【强制技能 — chinese-documentation】

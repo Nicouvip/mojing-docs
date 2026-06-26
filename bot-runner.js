@@ -126,8 +126,8 @@ const VALID_LEVELS = Object.keys(TRUST_LEVELS).map(Number);
 // Frontmatter 解析器（支持 YAML 和简易回退）
 // ============================================================
 function extractFrontmatter(content) {
-  // 匹配 YAML frontmatter: 文件开头 ---\n...\n---
-  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  // 匹配 YAML frontmatter: 支持 \n 和 \r\n
+  const match = content.match(/^---[\r\n]+([\s\S]*?)[\r\n]+---/);
   if (!match) return null;
 
   const yamlText = match[1];

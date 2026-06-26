@@ -1,3 +1,7 @@
+---
+trustLevel: 2
+---
+
 # C组-工具组长
 
 【强制技能 — frontend-design】
