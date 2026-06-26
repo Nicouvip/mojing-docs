@@ -1,11 +1,12 @@
-【强制技能 — webapp-testing + systematic-debugging】
-────────────────────────
+# QA测试工程师 — 当前任务
 
-编辑器终验 + 全站回归
+> 2026-06-26
 
-1. http://localhost:3000/page-editor.html?path=/ — 所有功能
-2. http://localhost:3000/ — 首页
-3. /login /desk /admin — 关键页面
-4. 更新 Bug 清单
+## 任务
+1. curl 验证 localhost:3000 全部页面 HTTP 200
+2. curl POST 验证 4个 AI 端点
+3. 验证编辑器基本操作（新建章/打字/保存/切换）
+4. 出 QA 报告到 output/QA-回归.md
 
-输出到 output/QA测试工程师-终验.md
+## 技能包
+verification-before-completion · systematic-debugging

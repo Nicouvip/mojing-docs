@@ -4,6 +4,7 @@
 文件系统即消息总线。自动故障转移。无需服务器。
 """
 import os, json, datetime, time, threading, webbrowser, subprocess, sys, traceback
+sys.path.insert(0, "D:/建网站/mojing-docs")
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 BASE = "D:/建网站/mojing-docs"

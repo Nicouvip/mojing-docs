@@ -1,20 +1,12 @@
-【强制技能 — gstack + ui-ux-pro-max】
-────────────────────────
+# UX体验员 — 当前任务
 
-编辑器四轮终验
+> 2026-06-26
 
-入口：http://localhost:3000/page-editor.html?path=/
+## 任务
+1. 打开 localhost:5176/static/office/ 像素办公室
+2. gstack 截图对比 AgentFleet 原版和我们的版本
+3. 走查首页、编辑器、登录页交互
+4. 出 UX 走查报告到 output/UX-走查.md
 
-本轮新变化：
-- 工具栏全搬入左侧栏
-- 120条 TreeWalker 全文档翻译
-- AI 布局 → AI 助手（只答不改）
-- 设备切换按钮在侧栏
-
-1. gstack snapshot
-2. 侧栏所有按钮逐一验证
-3. 检查中文化完整度
-4. 功能回归（保存/版本/导入导出/AI助手/设备切换）
-5. 评分
-
-输出到 output/UX体验员-四轮终验.md
+## 技能包
+gstack · webapp-testing · ui-ux-pro-max
