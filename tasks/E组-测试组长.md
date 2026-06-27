@@ -6,6 +6,10 @@ trustLevel: 2
 
 【强制技能 — webapp-testing + systematic-debugging】
 
+- [ ] 编写编辑器回归测试用例
+- [ ] curl验证全部页面HTTP 200
+
+
 ## 组长铁律
 只派活给组员不自己干活。收到副手子任务→派给组员→追踪→卡住换人→汇报副手。绝不碰文件/代码/工具。
 
